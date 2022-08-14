@@ -27,13 +27,11 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user != author and request.user.is_authenticated:
-        following = Follow.objects.filter(
-            user=request.user,
-            author=author
-        ).exists()
-    else:
-        following = False
+    following = (request.user != author and request.user.is_authenticated
+                 and Follow.objects.filter(
+                     user=request.user,
+                     author=author
+                 ).exists())
     return render(request, 'posts/profile.html', {
         'page_obj': paginator_page(
             request,
@@ -48,7 +46,6 @@ def post_detail(request, post_id):
     return render(request, 'posts/post_detail.html', {
         'post': get_object_or_404(Post, id=post_id),
         'form': CommentForm(),
-        'comments': get_object_or_404(Post, id=post_id).comments.all(),
     })
 
 
@@ -106,23 +103,19 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    subscription = Follow.objects.filter(
-        user=request.user,
-        author=author
-    ).exists()
-    if request.user != author and (
-            request.user.is_authenticated and not subscription
-    ):
+    if request.user != author and not Follow.objects.filter(
+            user=request.user,
+            author=author
+    ).exists():
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
-    subscription = Follow.objects.filter(
+    get_object_or_404(
+        Follow,
         user=request.user,
-        author=get_object_or_404(User, username=username)
-    )
-    if subscription.exists():
-        subscription.delete()
+        author__username=username
+    ).delete()
     return redirect('posts:profile', username)

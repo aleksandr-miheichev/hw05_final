@@ -62,10 +62,9 @@ class Post(CreatedModel):
         'Дата публикации поста: {pub_date}'
     )
 
-    class Meta:
+    class Meta(CreatedModel.Meta):
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
-        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.TEMPLATE_FIELDS.format(
@@ -94,10 +93,9 @@ class Comment(CreatedModel):
         help_text='Введите текст комментария'
     )
 
-    class Meta:
+    class Meta(CreatedModel.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text[:15]
@@ -116,3 +114,7 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор на которого подписались',
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'

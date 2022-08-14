@@ -28,6 +28,7 @@ share/python-wheels/
 MANIFEST
 yatube/static/css
 media/
+yatube/tmp7_xeap2f/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

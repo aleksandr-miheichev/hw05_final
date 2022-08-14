@@ -10,31 +10,26 @@ from django.urls import reverse
 from ..models import Follow, Group, Post, User
 from ..settings import POSTS_PER_PAGE
 
-USERNAME_TEST = 'UserTest'
-AUTHUSERNAME_TEST = 'Follower'
-GROUP_SLUG_TEST = 'test-slug'
-GROUP_SLUG_TEST_2 = 'test-slug-2'
+USERNAME = 'UserTest'
+AUTHUSERNAME = 'Follower'
+NON_AUTHOR_USERNAME = 'PostNonAuthor'
+GROUP_SLUG = 'test-slug'
+GROUP_SLUG_2 = 'test-slug-2'
 MAIN_PAGE_URL = reverse('posts:index')
-MAIN_PAGE_2_URL = reverse('posts:index') + '?page=2'
+MAIN_PAGE_2_URL = MAIN_PAGE_URL + '?page=2'
 POST_CREATE_URL = reverse('posts:post_create')
-USER_PAGE_URL = reverse('posts:profile', args=[USERNAME_TEST])
-USER_PAGE_URL_2 = reverse('posts:profile', args=[USERNAME_TEST]) + '?page=2'
-COMMUNITY_PAGE_URL = reverse('posts:group_list', args=[GROUP_SLUG_TEST])
-COMMUNITY_PAGE_2_URL = (reverse('posts:group_list', args=[GROUP_SLUG_TEST])
-                        + '?page=2')
+USER_PAGE_URL = reverse('posts:profile', args=[USERNAME])
+USER_PAGE_URL_2 = USER_PAGE_URL + '?page=2'
+COMMUNITY_PAGE_URL = reverse('posts:group_list', args=[GROUP_SLUG])
+COMMUNITY_PAGE_2_URL = COMMUNITY_PAGE_URL + '?page=2'
 COMMUNITY_PAGE_URL_SLUG_2 = reverse(
     'posts:group_list',
-    args=[GROUP_SLUG_TEST_2]
+    args=[GROUP_SLUG_2]
 )
-FOLLOW_PAGE = reverse('posts:follow_index')
-PAGE_URL_POST_COUNT = (
-    (MAIN_PAGE_URL, POSTS_PER_PAGE),
-    (COMMUNITY_PAGE_URL, POSTS_PER_PAGE),
-    (USER_PAGE_URL, POSTS_PER_PAGE),
-    (MAIN_PAGE_2_URL, 1),
-    (COMMUNITY_PAGE_2_URL, 1),
-    (USER_PAGE_URL_2, 1),
-)
+FOLLOW_PAGE_URL = reverse('posts:follow_index')
+FOLLOW_PAGE_URL_2 = FOLLOW_PAGE_URL + '?page=2'
+PROFILE_FOLLOW_PAGE_URL = reverse('posts:profile_follow', args=[USERNAME])
+PROFILE_UNFOLLOW_PAGE_URL = reverse('posts:profile_unfollow', args=[USERNAME])
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -56,18 +51,19 @@ class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username=USERNAME_TEST)
-        cls.follower = User.objects.create_user(
-            username=AUTHUSERNAME_TEST
+        cls.user = User.objects.create_user(username=USERNAME)
+        cls.follower = User.objects.create_user(username=AUTHUSERNAME)
+        cls.user_non_author_post = User.objects.create_user(
+            username=NON_AUTHOR_USERNAME
         )
         cls.group1 = Group.objects.create(
             title='Тестовое название сообщества',
-            slug=GROUP_SLUG_TEST,
+            slug=GROUP_SLUG,
             description='Тестовое описание сообщества',
         )
         cls.group2 = Group.objects.create(
             title='Тестовое название сообщества 2',
-            slug=GROUP_SLUG_TEST_2,
+            slug=GROUP_SLUG_2,
             description='Тестовое описание сообщества 2',
         )
         cls.post = Post.objects.create(
@@ -77,6 +73,13 @@ class PostModelTest(TestCase):
             image=UPLOADED
         )
         cls.DETAIL_POST_URL = reverse('posts:post_detail', args=[cls.post.id])
+        cls.guest = Client()
+        cls.author = Client()
+        cls.author.force_login(cls.user)
+        cls.subscriber = Client()
+        cls.subscriber.force_login(cls.follower)
+        cls.another = Client()
+        cls.another.force_login(cls.user_non_author_post)
 
     @classmethod
     def tearDownClass(cls):
@@ -84,22 +87,22 @@ class PostModelTest(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
-        self.guest = Client()
-        self.author = Client()
-        self.author.force_login(self.user)
-        self.subscriber = Client()
-        self.subscriber.force_login(self.follower)
+        cache.clear()
 
-    def test_template_page_show_correct_context(self):
-        """Шаблоны сформированы с правильным контекстом."""
+    def test_page_show_correct_context(self):
+        """Страницы сформированы с правильным контекстом."""
+        Follow.objects.all().delete()
+        if self.user != self.follower:
+            Follow.objects.create(user=self.follower, author=self.user)
         data = (
             (self.DETAIL_POST_URL, 'post'),
             (MAIN_PAGE_URL, 'page_obj'),
             (USER_PAGE_URL, 'page_obj'),
-            (COMMUNITY_PAGE_URL, 'page_obj')
+            (COMMUNITY_PAGE_URL, 'page_obj'),
+            (FOLLOW_PAGE_URL, 'page_obj')
         )
         for page_url, posts_context in data:
-            response = self.guest.get(page_url)
+            response = self.subscriber.get(page_url)
             if posts_context == 'post':
                 post = response.context[posts_context]
             else:
@@ -110,9 +113,10 @@ class PostModelTest(TestCase):
         self.assertEqual(post.group, self.post.group)
         self.assertEqual(post.id, self.post.id)
         self.assertEqual(post.image, self.post.image)
+        self.assertEqual(post.text, self.post.text)
 
     def test_group_list_page_show_correct_context(self):
-        """Шаблон group_list сформирован с правильным контекстом"""
+        """group_list сформирован с правильным контекстом"""
         response = self.guest.get(COMMUNITY_PAGE_URL)
         group = response.context['group']
         self.assertEqual(group.description, self.group1.description)
@@ -137,46 +141,31 @@ class PostModelTest(TestCase):
     def test_cache_index_page(self):
         """Проверка кеширования главной страницы"""
         Post.objects.all().delete()
+        response_first = self.author.get(MAIN_PAGE_URL)
         Post.objects.create(
             text=self.post.text,
             author=self.user,
             image=UPLOADED,
             group=self.group1
         )
-        response_first = self.author.get(MAIN_PAGE_URL)
-        self.assertEqual(Post.objects.count(), 1)
-        cache.clear()
         response_second = self.author.get(MAIN_PAGE_URL)
-        self.assertNotEqual(response_first.content, response_second.content)
+        self.assertEqual(response_second.content, response_first.content)
+        cache.clear()
+        response_third = self.author.get(MAIN_PAGE_URL)
+        self.assertNotEqual(response_third.content, response_second.content)
 
     def test_subscription_to_other_users_of_an_authorized_user(self):
         """Тест возможности подписки на других пользователей авторизованного
          пользователя."""
         Follow.objects.all().delete()
-        if self.user != self.follower:
-            Follow.objects.create(user=self.follower, author=self.user)
-        self.assertTrue(Follow.objects.filter(
-            user=self.follower,
-            author=self.user
-        ).exists())
+        self.subscriber.get(PROFILE_FOLLOW_PAGE_URL)
+        self.assertEqual(Follow.objects.count(), 1)
 
     def test_unsubscribing_from_a_favorite_author_by_an_authorized_user(self):
         """Тест возможности отписки от понравившегося автора авторизованным
         пользователем."""
-        if self.user != self.follower:
-            Follow.objects.create(user=self.follower, author=self.user)
-        if self.assertTrue(Follow.objects.filter(
-            user=self.follower,
-            author=self.user
-        ).exists()):
-            Follow.objects.filter(
-                user=self.follower,
-                author=self.user
-            ).delete()
-            self.assertFalse(Follow.objects.filter(
-                user=self.follower,
-                author=self.user
-            ).exists())
+        self.subscriber.get(PROFILE_UNFOLLOW_PAGE_URL)
+        self.assertEqual(Follow.objects.count(), 0)
 
     def test_of_the_appearance_of_a_new_entry_by_a_favorite_author(self):
         """Тест появления новой записи любимого автора."""
@@ -185,37 +174,37 @@ class PostModelTest(TestCase):
         if self.user != self.follower:
             Follow.objects.create(user=self.follower, author=self.user)
         post = Post.objects.create(text=self.post.text, author=self.user)
-        response = self.subscriber.get(FOLLOW_PAGE)
+        response = self.subscriber.get(FOLLOW_PAGE_URL)
+        response_2 = self.another.get(FOLLOW_PAGE_URL)
         self.assertEqual(len(response.context['page_obj']), 1)
         self.assertEqual(response.context['page_obj'][0].text, post.text)
-
-
-class PaginatorViewsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.user = User.objects.create_user(username=USERNAME_TEST)
-        cls.group = Group.objects.create(
-            title='Тестовое название сообщества',
-            slug=GROUP_SLUG_TEST,
-            description='Тестовое описание сообщества',
-        )
-
-    def setUp(self):
-        self.guest = Client()
+        self.assertEqual(len(response_2.context['page_obj']), 0)
 
     def test_paginator_page_displays_set_number_of_posts(self):
         """
         На страницах паджинатора выводится установленное количество постов
         """
+        Post.objects.all().delete()
+        PAGE_URL_POST_COUNT = (
+            (MAIN_PAGE_URL, POSTS_PER_PAGE),
+            (COMMUNITY_PAGE_URL, POSTS_PER_PAGE),
+            (USER_PAGE_URL, POSTS_PER_PAGE),
+            (FOLLOW_PAGE_URL, POSTS_PER_PAGE),
+            (FOLLOW_PAGE_URL_2, 1),
+            (MAIN_PAGE_2_URL, 1),
+            (COMMUNITY_PAGE_2_URL, 1),
+            (USER_PAGE_URL_2, 1),
+        )
         Post.objects.bulk_create(Post(
             text=f'Тестовая запись текста {i} поста',
             author=self.user,
-            group=self.group,
+            group=self.group1,
             image=UPLOADED
         ) for i in range(POSTS_PER_PAGE + 1))
+        if self.user != self.follower:
+            Follow.objects.create(user=self.follower, author=self.user)
         for page_url, post_count in PAGE_URL_POST_COUNT:
             with self.subTest(page_url=page_url):
-                response = self.client.get(page_url)
+                response = self.subscriber.get(page_url)
                 posts = response.context['page_obj']
                 self.assertEqual(len(posts), post_count)

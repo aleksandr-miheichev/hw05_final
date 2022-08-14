@@ -9,21 +9,9 @@
   <h1>
     Последние обновления на сайте
   </h1>
-    {% cache 20 index_page page_obj.number %}
-    {% include 'posts/includes/switcher.html' with index=True %}
-    {% for post in page_obj %}
-      <article>
-        {% include 'posts/includes/post_list.html' %}
-        {% if post.group %}
-          <a href="{% url 'posts:group_list' post.group.slug %}">
-            #{{ post.group }}
-          </a>
-        {% endif %}
-      </article>
-      {% if not forloop.last %}
-        <hr>
-      {% endif %}
-    {% endfor %}
+  {% cache 20 index_page page_obj.number %}
+  {% include 'posts/includes/switcher.html' with index=True %}
+  {% include 'posts/includes/post_template.html' %}
   {% endcache %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}
