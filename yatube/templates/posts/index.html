@@ -11,7 +11,9 @@
   </h1>
   {% cache 20 index_page page_obj.number %}
   {% include 'posts/includes/switcher.html' with index=True %}
-  {% include 'posts/includes/post_template.html' %}
+  {% for post in page_obj %}
+    {% include 'posts/includes/post_template.html' %}
+  {% endfor %}
   {% endcache %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}

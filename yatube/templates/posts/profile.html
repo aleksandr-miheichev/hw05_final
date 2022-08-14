@@ -23,7 +23,9 @@
           role="button">Подписаться</a>
       {% endif %}
     {% endif %}
+  {% for post in page_obj %}
     {% include 'posts/includes/post_template.html' %}
+  {% endfor %}
     {% include 'posts/includes/paginator.html' %}
   </div>
 {% endblock %}
