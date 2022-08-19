@@ -21,13 +21,10 @@
     Детали поста
   </a>
   <p>
-  {% if post.group %}
+  {% if post.group and index %}
     <a href="{% url 'posts:group_list' post.group.slug %}">
       #{{ post.group }}
     </a>
   {% endif %}
   </p>
 </article>
-{% if not forloop.last %}
-  <hr>
-{% endif %}

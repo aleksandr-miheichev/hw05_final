@@ -27,18 +27,20 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    following = (request.user != author and request.user.is_authenticated
-                 and Follow.objects.filter(
-                     user=request.user,
-                     author=author
-                 ).exists())
     return render(request, 'posts/profile.html', {
         'page_obj': paginator_page(
             request,
             Post.objects.filter(author__username=username)
         ),
         'author': author,
-        'following': following
+        'following': (
+            request.user != author
+            and request.user.is_authenticated
+            and Follow.objects.filter(
+                user=request.user,
+                author=author
+            ).exists()
+        )
     })
 
 
@@ -104,8 +106,8 @@ def follow_index(request):
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
     if request.user != author and not Follow.objects.filter(
-            user=request.user,
-            author=author
+        user=request.user,
+        author=author
     ).exists():
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)

@@ -10,10 +10,13 @@
     Посты любимых авторов
   </h1>
   {% cache 20 index_page %}
-  {% include 'posts/includes/switcher.html' with follow=True %}
-  {% for post in page_obj %}
-    {% include 'posts/includes/post_template.html' %}
-  {% endfor %}
+    {% include 'posts/includes/switcher.html' with follow=True %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post.html' with index=True %}
+      {% if not forloop.last %}
+        <hr>
+      {% endif %}
+    {% endfor %}
   {% endcache %}
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}
