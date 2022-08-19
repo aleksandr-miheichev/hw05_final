@@ -198,5 +198,3 @@ class PostFormTests(TestCase):
                 self.assertTrue(Post.objects.filter(image=self.post.image))
                 self.assertTrue(Post.objects.filter(text=self.post.text))
                 self.assertTrue(Post.objects.filter(group=self.post.group))
-
-
