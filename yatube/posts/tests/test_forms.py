@@ -51,6 +51,11 @@ class PostFormTests(TestCase):
             text='Тестовая запись текста поста',
             author=cls.user,
             group=cls.group,
+            image=SimpleUploadedFile(
+                name='small.gif',
+                content=SMALL_GIF, 
+                content_type='image/gif'
+            )
         )
         cls.DETAIL_POST_URL = reverse('posts:post_detail', args=[cls.post.id])
         cls.EDIT_POST_URL = reverse('posts:post_edit', args=[cls.post.id])
@@ -175,6 +180,19 @@ class PostFormTests(TestCase):
 
     def test_guest_another_edit_post(self):
         """Проверка возможности гостя, не-автора редактирования поста."""
+        # Post.objects.filter(id=self.post.id).update(image=self.UPLOADED)
+        # bob = Post.objects.get(id=self.post.id)
+        # bob.image = self.UPLOADED
+        # bob.save(update_fields=["image"])
+
+        # Post.objects.all().delete()
+        # post_1 = Post.objects.create(
+        #     text='Тестовая запись текста поста',
+        #     author=self.user,
+        #     group=self.group,
+        #     image=self.UPLOADED
+        # )
+        # print(Post.objects.filter(id=self.post.id))
         form_data = {
             'text': 'Изменённый текст поста автора',
             'group': self.group_2,
@@ -194,6 +212,6 @@ class PostFormTests(TestCase):
                 self.assertRedirects(response, url)
                 post = Post.objects.get(id=self.post.id)
                 self.assertEqual(post.author, self.post.author)
-                self.assertFalse(post.image)
+                self.assertEqual(post.image, self.post.image)
                 self.assertEqual(post.text, self.post.text)
                 self.assertEqual(post.group, self.post.group)

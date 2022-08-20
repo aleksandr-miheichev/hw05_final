@@ -21,7 +21,7 @@
     Детали поста
   </a>
   <p>
-  {% if post.group and not group_display %}
+  {% if post.group and not group_hide %}
     <a href="{% url 'posts:group_list' post.group.slug %}">
       #{{ post.group }}
     </a>

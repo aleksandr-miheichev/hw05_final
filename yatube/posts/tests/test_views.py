@@ -123,8 +123,8 @@ class PostModelTest(TestCase):
         self.assertEqual(group.slug, self.group1.slug)
         self.assertEqual(group.title, self.group1.title)
 
-    def test_post_not_getting_into_another_group_and_subscription_feed(self):
-        """Тест непопадания поста в другую группу и ленту подписок"""
+    def test_incorrect_post_publishing(self):
+        """Тест некорректной публикации поста"""
         Follow.objects.all().delete()
         if self.user != self.follower:
             Follow.objects.create(user=self.follower, author=self.user)
