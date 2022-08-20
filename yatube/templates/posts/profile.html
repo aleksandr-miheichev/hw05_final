@@ -23,12 +23,12 @@
           role="button">Подписаться</a>
       {% endif %}
     {% endif %}
-  {% for post in page_obj %}
-    {% include 'posts/includes/post.html' with index=True %}
-    {% if not forloop.last %}
-      <hr>
-    {% endif %}
-  {% endfor %}
-  {% include 'posts/includes/paginator.html' %}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post.html' %}
+      {% if not forloop.last %}
+        <hr>
+      {% endif %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
   </div>
 {% endblock %}

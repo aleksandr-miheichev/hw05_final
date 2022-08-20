@@ -123,8 +123,8 @@ class PostModelTest(TestCase):
         self.assertEqual(group.slug, self.group1.slug)
         self.assertEqual(group.title, self.group1.title)
 
-    def test_post_another_group(self):
-        """Пост не попал в группу, для которой не был предназначен"""
+    def test_post_not_getting_into_another_group_and_subscription_feed(self):
+        """Тест непопадания поста в другую группу и ленту подписок"""
         Follow.objects.all().delete()
         if self.user != self.follower:
             Follow.objects.create(user=self.follower, author=self.user)
@@ -158,7 +158,10 @@ class PostModelTest(TestCase):
         Follow.objects.all().delete()
         self.subscriber.get(PROFILE_FOLLOW_URL)
         self.assertTrue(
-            Follow.objects.get(user=self.follower, author=self.user)
+            Follow.objects.filter(
+                user=self.follower,
+                author=self.user
+            ).exists()
         )
 
     def test_unsubscribing_from_a_favorite_author_by_an_authorized_user(self):
@@ -170,7 +173,10 @@ class PostModelTest(TestCase):
         )
         self.subscriber.get(PROFILE_UNFOLLOW_URL)
         self.assertFalse(
-            Follow.objects.filter(user=self.follower, author=self.user)
+            Follow.objects.filter(
+                user=self.follower,
+                author=self.user
+            ).exists()
         )
 
     def test_paginator_page_displays_set_number_of_posts(self):

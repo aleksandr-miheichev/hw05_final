@@ -51,7 +51,6 @@ class PostFormTests(TestCase):
             text='Тестовая запись текста поста',
             author=cls.user,
             group=cls.group,
-            image=None
         )
         cls.DETAIL_POST_URL = reverse('posts:post_detail', args=[cls.post.id])
         cls.EDIT_POST_URL = reverse('posts:post_edit', args=[cls.post.id])
@@ -193,12 +192,8 @@ class PostFormTests(TestCase):
                     follow=True
                 )
                 self.assertRedirects(response, url)
-                self.assertEqual(Post.objects.count(), 1)
-                self.assertTrue(
-                    Post.objects.filter(
-                        author=self.post.author,
-                        image=self.post.image,
-                        text=self.post.text,
-                        group=self.post.group
-                    )
-                )
+                post = Post.objects.get(id=self.post.id)
+                self.assertEqual(post.author, self.post.author)
+                self.assertFalse(post.image)
+                self.assertEqual(post.text, self.post.text)
+                self.assertEqual(post.group, self.post.group)

@@ -29,6 +29,7 @@ MANIFEST
 yatube/static/css
 media/
 yatube/tmp7_xeap2f/
+yatube/tmpr0b0ga56
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -147,3 +148,4 @@ dmypy.json
 .history/
 
 .mypy_cache
+/yatube/tmpr0b0ga56/

@@ -12,7 +12,7 @@
   {% cache 20 index_page %}
     {% include 'posts/includes/switcher.html' with follow=True %}
     {% for post in page_obj %}
-      {% include 'posts/includes/post.html' with index=True %}
+      {% include 'posts/includes/post.html' %}
       {% if not forloop.last %}
         <hr>
       {% endif %}
