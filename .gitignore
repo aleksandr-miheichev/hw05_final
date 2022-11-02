@@ -26,7 +26,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-yatube/static/css
 media/
 yatube/tmp7_xeap2f/
 yatube/tmpr0b0ga56
