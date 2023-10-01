@@ -1,6 +1,7 @@
 # Платформа для социальных сетей
 
 [![Python-Lint-Test](https://github.com/aleksandr-miheichev/social_platform/actions/workflows/python-app.yml/badge.svg)](https://github.com/aleksandr-miheichev/social_platform/actions/workflows/python-app.yml)
+
 ## Содержание
 
 - [Описание проекта](#описание-проекта)
