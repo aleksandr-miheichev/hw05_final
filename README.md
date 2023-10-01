@@ -76,7 +76,7 @@ pip install -r requirements.txt
 Чтобы запустить модуль, необходимо в терминале перейти в папку yatube:
 
 ```bash
-cd .\yatube.py
+cd .\yatube\
 ```
 
 Далее необходимо применить миграции:
