@@ -1,7 +1,6 @@
 # Платформа для социальных сетей
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
-
+[![Python-Lint-Test](https://github.com/aleksandr-miheichev/social_platform/actions/workflows/python-app.yml/badge.svg)](https://github.com/aleksandr-miheichev/social_platform/actions/workflows/python-app.yml)
 ## Содержание
 
 - [Описание проекта](#описание-проекта)
